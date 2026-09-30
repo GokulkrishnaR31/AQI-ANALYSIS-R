@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useAQI } from '../context/AQIContext'
+import { useAQI, ALL_STATES, getCitiesForState } from '../context/AQIContext'
 import './Header.css'
 
 export default function Header({ activeTab, onTabChange }) {
-  const { selectedState, setSelectedState, selectedCity, setSelectedCity, cityOptions, ALL_STATES } = useAQI()
+  const { selectedState, setSelectedState, selectedCity, setSelectedCity } = useAQI()
   const [timeStr, setTimeStr] = useState('')
+
+  const cityOptions = getCitiesForState(selectedState) || ['Delhi']
 
   useEffect(() => {
     const updateTime = () => {
@@ -62,7 +64,7 @@ export default function Header({ activeTab, onTabChange }) {
               onChange={handleStateChange}
             >
               <option value="All India">All India (Aggregated)</option>
-              {ALL_STATES.filter(s => s !== 'All India').map(s => (
+              {Array.isArray(ALL_STATES) && ALL_STATES.filter(s => s !== 'All India').map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
