@@ -1,0 +1,37 @@
+ANOVA state:
+                Df    Sum Sq Mean Sq F value Pr(>F)    
+state           31 217188413 7006078    1674 <2e-16 ***
+Residuals   235753 986423899    4184                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+ANOVA month:
+                      Df    Sum Sq  Mean Sq F value Pr(>F)    
+factor(month_num)     11 242335140 22030467    5403 <2e-16 ***
+Residuals         235773 961277172     4077                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+ANOVA pollutant:
+                         Df    Sum Sq Mean Sq F value Pr(>F)    
+prominent_pollutants     48 301810135 6287711    1644 <2e-16 ***
+Residuals            235736 901802176    3825                   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+T-test Top 2 (Delhi vs Jharkhand):
+
+	Welch Two Sample t-test
+
+data:  d_delhi and d_jharkhand
+t = 11.12, df = 1826.1, p-value < 2.2e-16
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ 34.16120 48.79186
+sample estimates:
+mean of x mean of y 
+ 206.4169  164.9404 
+
+
+Correlation Stations vs AQI:
+Pearson: 0.07728279 Spearman: 0.07192092 

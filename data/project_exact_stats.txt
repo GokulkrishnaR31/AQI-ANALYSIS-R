@@ -1,0 +1,308 @@
+=================================================================
+PROJECT EXACT VERIFIED STATISTICS DUMP
+=================================================================
+
+1. RAW DATASET:
+Dimensions: Rows = 235785 , Columns = 9 
+Columns: date, state, area, number_of_monitoring_stations, prominent_pollutants, aqi_value, air_quality_status, unit, note 
+Missing values per column:
+                         date                         state 
+                            0                             0 
+                         area number_of_monitoring_stations 
+                            0                             0 
+         prominent_pollutants                     aqi_value 
+                            0                             0 
+           air_quality_status                          unit 
+                            0                             0 
+                         note 
+                       235785 
+Total missing values in raw: 235785 
+Total duplicate rows in raw: 0 
+
+2. CLEAN DATASET:
+Dimensions: Rows = 235785 , Columns = 11 
+Columns: date, state, area, number_of_monitoring_stations, prominent_pollutants, aqi_value, air_quality_status, year, month, month_num, day 
+Missing values in clean:
+                         date                         state 
+                            0                             0 
+                         area number_of_monitoring_stations 
+                            0                             0 
+         prominent_pollutants                     aqi_value 
+                            0                             0 
+           air_quality_status                          year 
+                            0                             0 
+                        month                     month_num 
+                            0                             0 
+                          day 
+                            0 
+Date range: 2022-04-01 to 2025-04-30 
+Number of unique states: 32 
+Number of unique areas/cities: 291 
+Unique states list:
+ [1] "Andaman and Nicobar Islands" "Andhra Pradesh"             
+ [3] "Arunachal Pradesh"           "Assam"                      
+ [5] "Bihar"                       "Chandigarh"                 
+ [7] "Chhattisgarh"                "Delhi"                      
+ [9] "Gujarat"                     "Haryana"                    
+[11] "Himachal Pradesh"            "Jammu and Kashmir"          
+[13] "Jharkhand"                   "Karnataka"                  
+[15] "Kerala"                      "Madhya Pradesh"             
+[17] "Maharashtra"                 "Manipur"                    
+[19] "Meghalaya"                   "Mizoram"                    
+[21] "Nagaland"                    "Odisha"                     
+[23] "Puducherry"                  "Punjab"                     
+[25] "Rajasthan"                   "Sikkim"                     
+[27] "Tamil Nadu"                  "Telangana"                  
+[29] "Tripura"                     "Uttar Pradesh"              
+[31] "Uttarakhand"                 "West Bengal"                
+
+3. DESCRIPTIVE STATISTICS (AQI):
+Mean: 111.13
+Median: 92.00
+SD: 71.45
+Min: 3.00
+Max: 500.00
+Q1 (25%): 59.00
+Q3 (75%): 142.00
+IQR: 83.00
+Skewness: 1.425
+
+4. AQI CATEGORY BREAKDOWN:
+      Category Count   Pct
+1         Good 41971 17.80
+2 Satisfactory 88897 37.70
+3     Moderate 77537 32.88
+4         Poor 21154  8.97
+5    Very Poor  5671  2.41
+6       Severe   555  0.24
+
+5. PROMINENT POLLUTANTS BREAKDOWN:
+       Pollutant  Count   Pct
+1           PM10 111053 47.10
+2          PM2.5  59670 25.31
+3             O3  16202  6.87
+4     PM2.5,PM10  13199  5.60
+5             CO  12867  5.46
+6        PM10,O3   3914  1.66
+7            SO2   3815  1.62
+8            NO2   3012  1.28
+9        PM10,CO   2658  1.13
+10      PM2.5,O3   2088  0.89
+11      PM10,NO2   1278  0.54
+12 O3,PM2.5,PM10   1019  0.43
+13 PM2.5,PM10,CO    710  0.30
+14      PM10,SO2    551  0.23
+15         CO,O3    543  0.23
+
+6. TOP 15 MOST POLLUTED STATES:
+# A tibble: 15 × 6
+   state            avg_aqi max_aqi min_aqi median_aqi count
+   <chr>              <dbl>   <dbl>   <dbl>      <dbl> <int>
+ 1 Delhi               206.     494      44        194  1125
+ 2 Jharkhand           165.     436      20        154   721
+ 3 Himachal Pradesh    160.     438      24        151  1066
+ 4 Bihar               157.     488      11        132 21553
+ 5 Chandigarh          142.     412      32        127  1125
+ 6 Haryana             141.     469      17        120 21706
+ 7 Rajasthan           128.     452      18        113 26585
+ 8 Tripura             127.     362      15         95  1035
+ 9 Uttar Pradesh       126.     494      13        108 21609
+10 Odisha              125.     406      20        108 11099
+11 Punjab              118.     417      14        104  8488
+12 West Bengal         114.     394      20         94  6921
+13 Assam               114.     442       3         71  4921
+14 Gujarat             111.     384      10         97  6215
+15 Madhya Pradesh      109.     500       9         96 15477
+
+CLEANEST STATES:
+# A tibble: 10 × 6
+   state                       avg_aqi max_aqi min_aqi median_aqi count
+   <chr>                         <dbl>   <dbl>   <dbl>      <dbl> <int>
+ 1 Jammu and Kashmir              69.5     251      20       58     438
+ 2 Kerala                         68.1     293      12       63    5574
+ 3 Tamil Nadu                     67.8     399       8       58   11954
+ 4 Meghalaya                      62.7     484       8       46     874
+ 5 Karnataka                      62.7     500       8       54   23494
+ 6 Andaman and Nicobar Islands    57.7     150      22       57.5    58
+ 7 Puducherry                     56.5     274      19       51    1070
+ 8 Arunachal Pradesh              54.5     183       7       48     509
+ 9 Sikkim                         53.7     265      12       52     836
+10 Mizoram                        47.2     183       7       37    1000
+
+7. MONTHLY AQI:
+# A tibble: 12 × 6
+   month_num month avg_aqi max_aqi min_aqi count
+       <dbl> <ord>   <dbl>   <dbl>   <dbl> <int>
+ 1         1 Jan     152.      473      14 20151
+ 2         2 Feb     125.      471      11 18653
+ 3         3 Mar     109.      500      10 21017
+ 4         4 Apr     114.      500      14 24469
+ 5         5 May     110.      460       9 18100
+ 6         6 Jun      93.5     484       3 17555
+ 7         7 Jul      62.8     459       7 18303
+ 8         8 Aug      65.5     399       7 18536
+ 9         9 Sep      67.6     363       8 18499
+10        10 Oct     107.      500       8 19900
+11        11 Nov     161.      494      10 20104
+12        12 Dec     151.      500       8 20498
+
+8. YEARLY AQI:
+# A tibble: 4 × 3
+   year avg_aqi count
+  <dbl>   <dbl> <int>
+1  2022    114. 43457
+2  2023    115. 77253
+3  2024    106. 87746
+4  2025    112. 27329
+
+9. POLLUTANT VS AQI:
+# A tibble: 49 × 4
+   prominent_pollutants avg_aqi max_aqi  count
+   <chr>                  <dbl>   <dbl>  <int>
+ 1 PM2.5                  168.      500  59670
+ 2 PM2.5,PM10             130.      468  13199
+ 3 O3,PM2.5,PM10          120.      315   1019
+ 4 PM2.5,O3               118.      324   2088
+ 5 PM2.5,NO2              110.      281    415
+ 6 PM10,NO2,PM2.5,O3      106.      209     43
+ 7 PM10,O3                 96.7     306   3914
+ 8 PM10                    93.7     500 111053
+ 9 PM2.5,SO2               93.6     301    278
+10 PM10,PM2.5,NO2          89.8     264    281
+# ℹ 39 more rows
+
+10. MODEL COMPARISON:
+              Model    RMSE     MAE     R2
+1 Linear Regression 55.6092 41.4362 0.3901
+2     Random Forest 48.2871 34.4654 0.5412
+
+11. RANDOM FOREST VARIABLE IMPORTANCE:
+RF ntree: 200 mtry: 3 
+RF % Var explained: 54 %
+                                %IncMSE IncNodePurity
+month_num                      31.74217       9520559
+number_of_monitoring_stations  59.78133       3985803
+pollutant_score               168.00831      43283963
+season                         14.37329       3353088
+is_winter                      21.47510      15808088
+is_monsoon                     25.42813      16264644
+state_mean_aqi                135.08726      43031779
+
+12. LINEAR REGRESSION SUMMARY:
+
+Call:
+lm(formula = aqi_value ~ ., data = train_data)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-188.08  -36.32   -8.05   25.11  410.08 
+
+Coefficients:
+                                Estimate Std. Error t value Pr(>|t|)    
+(Intercept)                   -38.100204   0.697820  -54.60  < 2e-16 ***
+month_num                       0.160562   0.048956    3.28  0.00104 ** 
+number_of_monitoring_stations   1.467655   0.044087   33.29  < 2e-16 ***
+pollutant_score                 9.542210   0.105407   90.53  < 2e-16 ***
+season                          1.973867   0.175514   11.25  < 2e-16 ***
+is_winter                      34.285467   0.356210   96.25  < 2e-16 ***
+is_monsoon                    -38.216501   0.334783 -114.15  < 2e-16 ***
+state_mean_aqi                  0.957957   0.004311  222.21  < 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 55.69 on 188620 degrees of freedom
+Multiple R-squared:  0.3934,	Adjusted R-squared:  0.3934 
+F-statistic: 1.748e+04 on 7 and 188620 DF,  p-value: < 2.2e-16
+
+
+13. BENCHMARK STATS:
+# A tibble: 1 × 7
+  total_obs cpcb_compliant_days who_compliant_days cpcb_compliance_pct
+      <int>               <int>              <int>               <dbl>
+1    235785              130868              41971                55.5
+# ℹ 3 more variables: who_compliance_pct <dbl>, avg_aqi <dbl>, max_aqi <dbl>
+
+14. 7-DAY FORECAST:
+        date predicted_aqi lower_bound upper_bound
+1 2026-08-28          90.7        76.7       104.8
+2 2026-08-29          90.7        70.8       110.7
+3 2026-08-30          90.7        66.4       115.1
+4 2026-08-31          90.7        62.6       118.9
+5 2026-09-01          90.7        59.3       122.2
+6 2026-09-02          90.7        56.3       125.2
+7 2026-09-03          90.7        53.5       128.0
+
+15. ANOMALY EVENTS SAMPLE:
+Total anomalies detected: 1125 
+# A tibble: 10 × 6
+   date       mean_aqi max_aqi z_score is_anomaly event_type     
+   <date>        <dbl>   <dbl>   <dbl> <lgl>      <chr>          
+ 1 2022-04-01     147.     418   0.965 FALSE      Normal Baseline
+ 2 2022-04-02     142.     388   0.839 FALSE      Normal Baseline
+ 3 2022-04-03     137.     320   0.711 FALSE      Normal Baseline
+ 4 2022-04-04     143.     368   0.863 FALSE      Normal Baseline
+ 5 2022-04-05     140.     407   0.784 FALSE      Normal Baseline
+ 6 2022-04-06     136.     336   0.681 FALSE      Normal Baseline
+ 7 2022-04-07     137.     344   0.696 FALSE      Normal Baseline
+ 8 2022-04-08     139.     343   0.769 FALSE      Normal Baseline
+ 9 2022-04-09     140.     354   0.780 FALSE      Normal Baseline
+10 2022-04-10     131.     358   0.530 FALSE      Normal Baseline
+
+16. HEALTH POLICY TEST:
+$policy
+$policy$baseline_aqi
+[1] 280
+
+$policy$simulated_aqi
+[1] 203.7
+
+$policy$aqi_drop
+[1] 76.3
+
+$policy$pct_reduction
+[1] 27.2
+
+$policy$er_visits_avoided
+[1] 13.7
+
+$policy$new_status
+[1] "Poor"
+
+
+$aqli
+$aqli$pm25
+[1] 85
+
+$aqli$years_lost
+[1] 7.8
+
+$aqli$months_lost
+[1] 94
+
+$aqli$risk_level
+[1] "Very High Health Risk"
+
+$aqli$advisory
+[1] "Use air purifiers indoors. Vulnerable populations stay indoors."
+
+
+$purifier
+$purifier$room_sqft
+[1] 250
+
+$purifier$room_volume_m3
+[1] 56.6
+
+$purifier$cadr_m3h
+[1] 283
+
+$purifier$cadr_cfm
+[1] 167
+
+$purifier$indoor_no_filter
+[1] 66
+
+$purifier$indoor_with_hepa
+[1] 7.9
+
+
