@@ -1,31 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useAQI } from '../context/AQIContext'
+import { useState, useMemo } from 'react'
+import { useAQI, getCityDetails } from '../context/AQIContext'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid,
   AreaChart, Area, ReferenceLine
 } from 'recharts'
 
-// Complete State & City Intelligence Database (derived from 235k records)
-const CITY_DATABASE = {
-  'Delhi':          { state: 'Delhi',          aqi: 312, pm25: 262.4, pm10: 384.0, nox: 74.2, so2: 16.8, co: 2.14, o3: 42.5, station: 'Anand Vihar CAAQMS (DPCC)', temp: '27.8°C', wind: '4.2 km/h ↖ NW', hum: '64%', mix: '420m (Low)', cat: 'Hazardous', delta: '+18.4%' },
-  'Ahmedabad':      { state: 'Gujarat',        aqi: 184, pm25: 88.5,  pm10: 176.0, nox: 42.1, so2: 14.5, co: 1.45, o3: 36.2, station: 'Maninagar CAAQMS (GPCB)',    temp: '31.2°C', wind: '7.8 km/h ↗ NE', hum: '52%', mix: '680m (Mod)', cat: 'Moderate', delta: '+4.2%' },
-  'Surat':          { state: 'Gujarat',        aqi: 162, pm25: 74.0,  pm10: 155.0, nox: 36.8, so2: 18.2, co: 1.30, o3: 31.0, station: 'Athwa CAAQMS (GPCB)',        temp: '30.5°C', wind: '9.4 km/h ➔ W',  hum: '68%', mix: '750m (Good)', cat: 'Moderate', delta: '-2.1%' },
-  'Vadodara':       { state: 'Gujarat',        aqi: 175, pm25: 82.0,  pm10: 168.0, nox: 39.5, so2: 15.1, co: 1.38, o3: 34.0, station: 'Dandia Bazar (GPCB)',       temp: '31.0°C', wind: '6.5 km/h ↗ NE', hum: '55%', mix: '650m (Mod)', cat: 'Moderate', delta: '+1.8%' },
-  'Rajkot':         { state: 'Gujarat',        aqi: 155, pm25: 68.0,  pm10: 142.0, nox: 31.0, so2: 12.0, co: 1.15, o3: 29.5, station: 'Race Course (GPCB)',         temp: '29.8°C', wind: '8.2 km/h ➔ W',  hum: '48%', mix: '720m (Good)', cat: 'Moderate', delta: '-3.5%' },
-  'Mumbai':         { state: 'Maharashtra',    aqi: 172, pm25: 79.2,  pm10: 164.5, nox: 48.6, so2: 15.2, co: 1.52, o3: 28.4, station: 'Bandra CAAQMS (MPCB)',       temp: '29.4°C', wind: '11.2 km/h ➔ W', hum: '76%', mix: '820m (Good)', cat: 'Moderate', delta: '-1.4%' },
-  'Pune':           { state: 'Maharashtra',    aqi: 138, pm25: 58.4,  pm10: 132.0, nox: 35.1, so2: 11.8, co: 1.22, o3: 32.1, station: 'Shivajinagar (MPCB)',       temp: '26.8°C', wind: '8.5 km/h ↗ NE', hum: '58%', mix: '780m (Good)', cat: 'Moderate', delta: '+2.0%' },
-  'Bengaluru':      { state: 'Karnataka',      aqi: 63,  pm25: 24.5,  pm10: 62.0,  nox: 22.4, so2: 8.5,  co: 0.85, o3: 24.2, station: 'BTM Layout CAAQMS (KSPCB)',  temp: '24.5°C', wind: '9.8 km/h ↘ SE', hum: '62%', mix: '950m (High)', cat: 'Satisfactory', delta: '-5.2%' },
-  'Chennai':        { state: 'Tamil Nadu',     aqi: 78,  pm25: 32.1,  pm10: 74.5,  nox: 26.2, so2: 9.8,  co: 0.94, o3: 22.0, station: 'Alandur CAAQMS (TNPCB)',     temp: '28.6°C', wind: '12.4 km/h ➔ E', hum: '81%', mix: '880m (Good)', cat: 'Satisfactory', delta: '-3.1%' },
-  'Kolkata':        { state: 'West Bengal',    aqi: 208, pm25: 142.0, pm10: 218.0, nox: 54.0, so2: 19.5, co: 1.85, o3: 38.0, station: 'Victoria Memorial (WBPCB)',   temp: '27.2°C', wind: '5.4 km/h ↙ SW', hum: '72%', mix: '520m (Mod)', cat: 'Poor', delta: '+8.6%' },
-  'Hyderabad':      { state: 'Telangana',      aqi: 146, pm25: 64.2,  pm10: 138.0, nox: 38.0, so2: 13.2, co: 1.28, o3: 31.5, station: 'Sanathnagar (TSPCB)',        temp: '28.1°C', wind: '7.5 km/h ➔ E',  hum: '59%', mix: '760m (Good)', cat: 'Moderate', delta: '+1.2%' },
-  'Jaipur':         { state: 'Rajasthan',      aqi: 228, pm25: 168.0, pm10: 252.0, nox: 61.2, so2: 21.0, co: 1.95, o3: 41.0, station: 'Adarsh Nagar (RSPCB)',       temp: '26.5°C', wind: '5.1 km/h ↖ NW', hum: '44%', mix: '480m (Low)', cat: 'Poor', delta: '+9.4%' },
-  'Lucknow':        { state: 'Uttar Pradesh',  aqi: 298, pm25: 235.0, pm10: 345.0, nox: 68.5, so2: 24.1, co: 2.10, o3: 44.2, station: 'Talkatora CAAQMS (UPPCB)',   temp: '25.4°C', wind: '3.8 km/h ↖ NW', hum: '68%', mix: '390m (Low)', cat: 'Very Poor', delta: '+14.2%' },
-  'Patna':          { state: 'Bihar',          aqi: 258, pm25: 195.0, pm10: 288.0, nox: 62.0, so2: 18.5, co: 1.92, o3: 39.0, station: 'Muradpur CAAQMS (BSPCB)',    temp: '26.0°C', wind: '4.2 km/h ↖ NW', hum: '70%', mix: '430m (Low)', cat: 'Poor', delta: '+11.5%' },
-  'Chandigarh':     { state: 'Chandigarh',     aqi: 175, pm25: 84.0,  pm10: 162.0, nox: 41.0, so2: 12.5, co: 1.35, o3: 33.0, station: 'Sector 22 CAAQMS (CPCC)',    temp: '23.8°C', wind: '6.2 km/h ↖ NW', hum: '56%', mix: '620m (Mod)', cat: 'Moderate', delta: '+3.4%' },
-  'Aizawl':         { state: 'Mizoram',        aqi: 24,  pm25: 8.5,   pm10: 22.0,  nox: 8.2,  so2: 3.1,  co: 0.32, o3: 14.5, station: 'Bawngkawn CAAQMS (MPCB)',    temp: '19.5°C', wind: '8.5 km/h ↗ NE', hum: '65%', mix: '1200m (High)', cat: 'Good', delta: '-1.5%' },
-}
-
-// Top 15 States dataset
 const TOP15_BASE = [
   { state: 'Karnataka',       hist: 63,  peak: 115, winter: 88 },
   { state: 'Andhra Pradesh',  hist: 112, peak: 185, winter: 145 },
@@ -55,7 +34,7 @@ function getSeverityColor(aqi) {
 
 function getAdvisory(aqi, city) {
   if (aqi > 300) return `Emergency Advisory: Hazardous levels in ${city}. Wear N95 masks outdoors.`
-  if (aqi > 200) return `Health Warning: High pollution in ${city}. Vulnerable groups avoid outdoor activities.`
+  if (aqi > 200) return `Health Warning: High pollution in ${city}. Vulnerable groups avoid outdoor exertion.`
   if (aqi > 100) return `Moderate Advisory: Air quality acceptable in ${city}; sensitive individuals limit exertion.`
   return `Clean Air: Conditions in ${city} are safe and optimal for outdoor exercise.`
 }
@@ -65,23 +44,10 @@ export default function LiveMonitor() {
   const [filterMode, setFilterMode] = useState('Historical Mean')
   const [refreshKey, setRefreshKey] = useState(0)
 
-  // Current City Active Data (falls back gracefully)
   const currentCityData = useMemo(() => {
-    if (CITY_DATABASE[selectedCity]) {
-      return CITY_DATABASE[selectedCity]
-    }
-    // Compute synthetic state baseline if exact city is not in quick table
-    return {
-      state: selectedState || 'India',
-      aqi: selectedState === 'Delhi' ? 312 : (selectedState === 'Gujarat' ? 184 : 155),
-      pm25: 75.0, pm10: 150.0, nox: 35.0, so2: 12.0, co: 1.2, o3: 30.0,
-      station: `${selectedCity} Central Station`,
-      temp: '28.5°C', wind: '6.5 km/h ↗ NE', hum: '58%', mix: '680m (Mod)',
-      cat: 'Moderate', delta: '+2.5%'
-    }
-  }, [selectedCity, selectedState, refreshKey])
+    return getCityDetails(selectedCity)
+  }, [selectedCity, refreshKey])
 
-  // Dynamic Trajectory based on city AQI
   const trajectoryData = useMemo(() => {
     const base = currentCityData.aqi
     return [
@@ -97,19 +63,19 @@ export default function LiveMonitor() {
     ]
   }, [currentCityData])
 
-  // Chart data based on filter mode
   const chartData = useMemo(() => {
     return TOP15_BASE.map(item => {
       let val = item.hist
       if (filterMode === 'Last 24h Peak') val = item.peak
       if (filterMode === 'Winter Smog Index') val = item.winter
+      const isSel = item.state.toLowerCase() === selectedState.toLowerCase() || (selectedState === 'Delhi' && item.state === 'Delhi') || (currentCityData.state.toLowerCase() === item.state.toLowerCase())
       return {
         state: item.state,
         aqi: val,
-        isSelected: item.state.toLowerCase() === selectedState.toLowerCase() || (selectedState === 'Delhi' && item.state === 'Delhi')
+        isSelected: isSel
       }
     })
-  }, [filterMode, selectedState])
+  }, [filterMode, selectedState, currentCityData])
 
   return (
     <div className="live-monitor-v2">
@@ -428,7 +394,7 @@ export default function LiveMonitor() {
                     dataKey="state"
                     width={130}
                     tick={(props) => {
-                      const isSel = props.payload.value.toLowerCase() === selectedState.toLowerCase() || (selectedState === 'Delhi' && props.payload.value.includes('Delhi'))
+                      const isSel = props.payload.value.toLowerCase() === selectedState.toLowerCase() || (selectedState === 'Delhi' && props.payload.value.includes('Delhi')) || (currentCityData.state.toLowerCase() === props.payload.value.toLowerCase())
                       return (
                         <text
                           x={props.x - 6}
