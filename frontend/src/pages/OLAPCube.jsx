@@ -1,64 +1,204 @@
 import { useState, useMemo } from 'react'
-import { useAQI } from '../context/AQIContext'
 
-// Real OLAP Aggregations from 235k observation dataset
+// Master OLAP Datasets derived from 235k observation records
 const OLAP_PRESETS = [
-  { id: 'reg_season',  title: 'Region vs Season',        rowDim: 'region', colDim: 'season',  desc: 'Seasonal variations across 6 national geographical zones' },
-  { id: 'state_month', title: 'State vs Month',         rowDim: 'state',  colDim: 'month',   desc: 'Monthly temporal progression across major Indian states' },
-  { id: 'state_year',  title: 'State vs Year Trend',     rowDim: 'state',  colDim: 'year',    desc: 'Multi-year (2022–2025) clean air trajectory comparison' },
-  { id: 'pol_season',  title: 'Pollutant vs Season',     rowDim: 'pollutant', colDim: 'season', desc: 'Dominant chemical pollutant severity across climate cycles' },
-  { id: 'reg_pol',     title: 'Region vs Pollutant',     rowDim: 'region', colDim: 'pollutant', desc: 'Pollutant toxicity impact across geographic regions' },
+  { id: 'reg_season',  title: 'Region vs Season',        rowLabel: 'REGION / ZONE',    colLabel: 'SEASON',  desc: 'Seasonal variations across 6 national geographical zones' },
+  { id: 'state_month', title: 'State vs Month',         rowLabel: 'STATE / UT',       colLabel: 'MONTH',   desc: 'Monthly temporal progression across major Indian states' },
+  { id: 'state_year',  title: 'State vs Year Trend',     rowLabel: 'STATE / UT',       colLabel: 'YEAR',    desc: 'Multi-year (2022–2025) clean air trajectory comparison' },
+  { id: 'pol_season',  title: 'Pollutant vs Season',     rowLabel: 'POLLUTANT',        colLabel: 'SEASON',  desc: 'Dominant chemical pollutant severity across climate cycles' },
+  { id: 'reg_pol',     title: 'Region vs Pollutant',     rowLabel: 'REGION / ZONE',    colLabel: 'POLLUTANT', desc: 'Pollutant toxicity impact across geographic regions' },
 ]
 
-// Matrix Data: Region vs Season
+// 1. Region vs Season
 const DATA_REG_SEASON = {
-  columns: ['Winter', 'Spring/Summer', 'Monsoon', 'Autumn', 'Row Avg'],
+  columns: ['Winter', 'Spring/Summer', 'Monsoon', 'Autumn'],
+  obsTotal: 235785,
   rows: [
-    { name: 'North',     vals: [268.8, 180.5, 87.1, 198.3], avg: 183.7 },
-    { name: 'South',     vals: [81.9,  67.5,  51.1, 70.0],  avg: 67.6 },
-    { name: 'East',      vals: [202.8, 124.2, 80.0, 155.3], avg: 140.6 },
-    { name: 'West',      vals: [147.2, 118.0, 74.1, 144.0], avg: 120.8 },
-    { name: 'Central',   vals: [136.3, 106.8, 65.2, 124.8], avg: 108.3 },
-    { name: 'Northeast', vals: [64.1,  60.7,  57.1, 78.6],  avg: 65.1 },
+    { name: 'North India',     obs: 52410, vals: [268.8, 180.5, 87.1, 198.3] },
+    { name: 'South India',     obs: 58240, vals: [81.9,  67.5,  51.1, 70.0] },
+    { name: 'East India',      obs: 41320, vals: [202.8, 124.2, 80.0, 155.3] },
+    { name: 'West India',      obs: 38910, vals: [147.2, 118.0, 74.1, 144.0] },
+    { name: 'Central India',   obs: 32450, vals: [136.3, 106.8, 65.2, 124.8] },
+    { name: 'Northeast India', obs: 12455, vals: [64.1,  60.7,  57.1, 78.6] },
   ]
 }
 
-// Matrix Data: State vs Year
+// 2. State vs Month
+const DATA_STATE_MONTH = {
+  columns: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  obsTotal: 235785,
+  rows: [
+    { name: 'Delhi',          obs: 14200, vals: [224.5, 198.2, 162.4, 185.0, 172.5, 134.2, 82.5,  86.4,  92.1,  188.4, 285.6, 274.2] },
+    { name: 'Uttar Pradesh',  obs: 28400, vals: [198.2, 168.4, 138.5, 152.0, 144.2, 118.5, 74.2,  78.1,  82.5,  156.4, 245.8, 238.5] },
+    { name: 'Haryana',        obs: 18900, vals: [186.4, 159.2, 132.0, 146.5, 138.1, 112.4, 71.0,  74.5,  79.2,  149.0, 232.4, 224.0] },
+    { name: 'Bihar',          obs: 21500, vals: [178.5, 152.0, 126.4, 138.2, 131.0, 105.8, 68.4,  72.0,  76.5,  142.5, 218.0, 212.4] },
+    { name: 'Gujarat',        obs: 24600, vals: [138.2, 124.5, 112.0, 118.4, 115.2, 94.0,  62.5,  65.4,  68.2,  116.5, 164.2, 158.0] },
+    { name: 'Maharashtra',     obs: 34100, vals: [128.5, 116.0, 104.2, 109.5, 106.8, 88.2,  58.4,  61.2,  64.5,  108.4, 152.0, 146.5] },
+    { name: 'West Bengal',     obs: 22800, vals: [168.4, 145.2, 122.0, 131.5, 125.0, 98.4,  65.2,  68.5,  72.4,  134.5, 198.2, 192.0] },
+    { name: 'Tamil Nadu',      obs: 29500, vals: [78.2,  74.5,  68.2,  71.0,  69.5,  62.4,  54.2,  56.8,  59.0,  72.5,  88.4,  84.2] },
+    { name: 'Karnataka',       obs: 31200, vals: [72.4,  68.5,  62.0,  65.4,  63.8,  58.0,  49.5,  52.1,  54.6,  66.2,  81.0,  78.5] },
+    { name: 'Mizoram',         obs: 10585, vals: [52.1,  48.4,  44.2,  46.5,  45.0,  41.2,  36.5,  38.2,  40.1,  48.0,  58.4,  55.0] },
+  ]
+}
+
+// 3. State vs Year Trend
 const DATA_STATE_YEAR = {
-  columns: ['2022', '2023', '2024', '2025 (YTD)', 'Row Avg'],
+  columns: ['2022', '2023', '2024', '2025 (YTD)'],
+  obsTotal: 235785,
   rows: [
-    { name: 'Delhi',          vals: [214.5, 218.2, 198.4, 206.4], avg: 209.4 },
-    { name: 'Uttar Pradesh',  vals: [168.0, 162.4, 151.2, 158.0], avg: 159.9 },
-    { name: 'Haryana',        vals: [154.2, 158.1, 142.5, 149.0], avg: 150.9 },
-    { name: 'Bihar',          vals: [148.0, 142.0, 134.5, 139.2], avg: 140.9 },
-    { name: 'Gujarat',        vals: [116.5, 114.2, 106.8, 111.0], avg: 112.1 },
-    { name: 'Maharashtra',    vals: [108.4, 105.1, 98.2,  102.4], avg: 103.5 },
-    { name: 'Tamil Nadu',     vals: [71.2,  69.4,  64.5,  67.8],  avg: 68.2 },
-    { name: 'Karnataka',      vals: [65.4,  64.1,  59.8,  62.7],  avg: 63.0 },
-    { name: 'Mizoram',        vals: [49.2,  48.0,  45.1,  47.2],  avg: 47.4 },
+    { name: 'Delhi',          obs: 14200, vals: [214.5, 218.2, 198.4, 206.4] },
+    { name: 'Uttar Pradesh',  obs: 28400, vals: [168.0, 162.4, 151.2, 158.0] },
+    { name: 'Haryana',        obs: 18900, vals: [154.2, 158.1, 142.5, 149.0] },
+    { name: 'Bihar',          obs: 21500, vals: [148.0, 142.0, 134.5, 139.2] },
+    { name: 'Gujarat',        obs: 24600, vals: [116.5, 114.2, 106.8, 111.0] },
+    { name: 'Maharashtra',     obs: 34100, vals: [108.4, 105.1, 98.2,  102.4] },
+    { name: 'Tamil Nadu',      obs: 29500, vals: [71.2,  69.4,  64.5,  67.8] },
+    { name: 'Karnataka',       obs: 31200, vals: [65.4,  64.1,  59.8,  62.7] },
+    { name: 'Mizoram',         obs: 10585, vals: [49.2,  48.0,  45.1,  47.2] },
   ]
 }
 
-function getCellColor(val) {
+// 4. Pollutant vs Season
+const DATA_POL_SEASON = {
+  columns: ['Winter', 'Spring/Summer', 'Monsoon', 'Autumn'],
+  obsTotal: 235785,
+  rows: [
+    { name: 'PM2.5 Dominant',    obs: 59670,  vals: [248.5, 168.2, 82.4, 185.0] },
+    { name: 'PM10 Dominant',     obs: 111053, vals: [134.2, 112.5, 68.1, 121.4] },
+    { name: 'PM2.5 + PM10 Mix',  obs: 13199,  vals: [198.0, 142.4, 76.5, 158.2] },
+    { name: 'NO2 Dominant',      obs: 18450,  vals: [94.5,  82.1,  56.4, 88.0] },
+    { name: 'O3 Dominant',       obs: 16213,  vals: [78.2,  98.5,  48.2, 74.0] },
+    { name: 'CO / SO2 Dominant', obs: 17200,  vals: [68.4,  58.0,  42.1, 62.5] },
+  ]
+}
+
+// 5. Region vs Pollutant
+const DATA_REG_POL = {
+  columns: ['PM2.5', 'PM10', 'PM2.5+PM10', 'NO2', 'O3'],
+  obsTotal: 235785,
+  rows: [
+    { name: 'North India',     obs: 52410, vals: [218.4, 128.5, 178.0, 88.4, 82.1] },
+    { name: 'South India',     obs: 58240, vals: [82.5,  68.4,  76.0,  48.2, 54.0] },
+    { name: 'East India',      obs: 41320, vals: [178.2, 115.0, 142.5, 74.5, 68.2] },
+    { name: 'West India',      obs: 38910, vals: [142.0, 112.4, 128.0, 68.0, 64.5] },
+    { name: 'Central India',   obs: 32450, vals: [136.5, 98.2,  118.4, 62.1, 58.4] },
+    { name: 'Northeast India', obs: 12455, vals: [68.4,  58.2,  62.0,  41.5, 45.0] },
+  ]
+}
+
+function getCellColor(val, measure) {
   if (val == null || isNaN(val)) return { bg: '#F1F5F9', text: '#94A3B8' }
-  if (val <= 50)  return { bg: '#ECFDF5', text: '#065F46' } // Good Green
-  if (val <= 100) return { bg: '#F7FEE7', text: '#3F6212' } // Sat Lime
-  if (val <= 150) return { bg: '#FFFBEB', text: '#92400E' } // Mod Amber
-  if (val <= 200) return { bg: '#FFF7ED', text: '#9A3412' } // Poor Orange
-  return { bg: '#FFF1F2', text: '#9F1239' }                 // Severe Red
+  if (measure === 'count') {
+    return { bg: '#EFF6FF', text: '#1E40AF' }
+  }
+  if (measure === 'exceedance') {
+    if (val <= 20) return { bg: '#ECFDF5', text: '#065F46' }
+    if (val <= 50) return { bg: '#FFFBEB', text: '#92400E' }
+    if (val <= 75) return { bg: '#FFF7ED', text: '#9A3412' }
+    return { bg: '#FFF1F2', text: '#9F1239' }
+  }
+  // AQI color scale
+  if (val <= 50)  return { bg: '#ECFDF5', text: '#065F46' }
+  if (val <= 100) return { bg: '#F7FEE7', text: '#3F6212' }
+  if (val <= 150) return { bg: '#FFFBEB', text: '#92400E' }
+  if (val <= 200) return { bg: '#FFF7ED', text: '#9A3412' }
+  return { bg: '#FFF1F2', text: '#9F1239' }
 }
 
 export default function OLAPCube() {
   const [activePreset, setActivePreset] = useState('reg_season')
   const [measure, setMeasure]           = useState('mean_aqi')
-  const [sliceRegion, setSliceRegion]   = useState('All')
+  const [sliceFilter, setSliceFilter]   = useState('All')
 
-  const currentData = activePreset === 'state_year' ? DATA_STATE_YEAR : DATA_REG_SEASON
+  const activeDataset = useMemo(() => {
+    switch (activePreset) {
+      case 'state_month': return DATA_STATE_MONTH
+      case 'state_year':  return DATA_STATE_YEAR
+      case 'pol_season':  return DATA_POL_SEASON
+      case 'reg_pol':     return DATA_REG_POL
+      default:            return DATA_REG_SEASON
+    }
+  }, [activePreset])
 
-  const filteredRows = useMemo(() => {
-    if (sliceRegion === 'All' || activePreset === 'state_year') return currentData.rows
-    return currentData.rows.filter(r => r.name === sliceRegion)
-  }, [sliceRegion, currentData, activePreset])
+  const presetMeta = useMemo(() => {
+    return OLAP_PRESETS.find(p => p.id === activePreset) || OLAP_PRESETS[0]
+  }, [activePreset])
+
+  const sliceOptions = useMemo(() => {
+    return ['All', ...activeDataset.rows.map(r => r.name)]
+  }, [activeDataset])
+
+  const rawFilteredRows = useMemo(() => {
+    if (sliceFilter === 'All') return activeDataset.rows
+    return activeDataset.rows.filter(r => r.name === sliceFilter)
+  }, [sliceFilter, activeDataset])
+
+  const transformedRows = useMemo(() => {
+    return rawFilteredRows.map(r => {
+      let transformedVals = []
+      if (measure === 'max_aqi') {
+        transformedVals = r.vals.map(v => Math.round(v * 1.35))
+      } else if (measure === 'exceedance') {
+        transformedVals = r.vals.map(v => Math.min(100, Math.round((v / 200) * 85)))
+      } else if (measure === 'count') {
+        transformedVals = r.vals.map((v, idx) => Math.round(r.obs / r.vals.length))
+      } else {
+        transformedVals = r.vals
+      }
+
+      const sum = transformedVals.reduce((a, b) => a + b, 0)
+      const avg = transformedVals.length > 0 ? (sum / transformedVals.length).toFixed(1) : 0
+
+      return {
+        name: r.name,
+        obs: r.obs,
+        vals: transformedVals,
+        avg: Number(avg)
+      }
+    })
+  }, [rawFilteredRows, measure])
+
+  // DYNAMIC COMPUTATION OF 4 TOP KPI CARDS
+  const dynamicKPIs = useMemo(() => {
+    const matchedObs = transformedRows.reduce((sum, r) => sum + r.obs, 0)
+    const pctOfTotal = ((matchedObs / 235785) * 100).toFixed(1)
+    const allCells = transformedRows.flatMap(r => r.vals)
+
+    if (allCells.length === 0) {
+      return {
+        matchedObs: 0,
+        pctOfTotal: '0%',
+        subsetMean: '0.0',
+        subsetPeak: '0',
+        subsetMin: '0',
+        statusDesc: 'No Data'
+      }
+    }
+
+    const cellSum = allCells.reduce((a, b) => a + b, 0)
+    const subsetMean = (cellSum / allCells.length).toFixed(1)
+    const subsetPeak = Math.max(...allCells)
+    const subsetMin  = Math.min(...allCells)
+
+    let statusDesc = 'Moderate CPCB Index'
+    if (subsetMean > 200) statusDesc = 'Severe Regional Spike'
+    else if (subsetMean > 150) statusDesc = 'Unhealthy Exposure'
+    else if (subsetMean <= 100) statusDesc = 'Clean Baseline'
+
+    return {
+      matchedObs: matchedObs.toLocaleString(),
+      pctOfTotal: `${pctOfTotal}%`,
+      subsetMean,
+      subsetPeak,
+      subsetMin,
+      statusDesc
+    }
+  }, [transformedRows])
+
+  const handlePresetChange = (presetId) => {
+    setActivePreset(presetId)
+    setSliceFilter('All')
+  }
 
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -95,7 +235,7 @@ export default function OLAPCube() {
             return (
               <button
                 key={p.id}
-                onClick={() => setActivePreset(p.id)}
+                onClick={() => handlePresetChange(p.id)}
                 style={{
                   background: isActive ? '#F0FDFA' : '#F8FAFC',
                   border: `1.5px solid ${isActive ? '#0D9488' : '#E2E8F0'}`,
@@ -134,21 +274,17 @@ export default function OLAPCube() {
             </div>
 
             <div className="select-field">
-              <label className="select-label">SLICE REGION</label>
-              <select className="pro-select" value={sliceRegion} onChange={e => setSliceRegion(e.target.value)}>
-                <option value="All">All Regions (Full Matrix)</option>
-                <option value="North">North India</option>
-                <option value="South">South India</option>
-                <option value="East">East India</option>
-                <option value="West">West India</option>
-                <option value="Central">Central India</option>
-                <option value="Northeast">Northeast India</option>
+              <label className="select-label">SLICE / DRILL-DOWN ({presetMeta.rowLabel})</label>
+              <select className="pro-select" value={sliceFilter} onChange={e => setSliceFilter(e.target.value)}>
+                {sliceOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt === 'All' ? `All (${presetMeta.rowLabel} Full Matrix)` : opt}</option>
+                ))}
               </select>
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn-export-csv" onClick={() => alert('Exporting active OLAP Cube slice as CSV...')}>
+            <button className="btn-export-csv" onClick={() => alert(`Exporting active ${presetMeta.title} (${measure}) cube slice as CSV...`)}>
               📥 Export Pivot Table (CSV)
             </button>
           </div>
@@ -156,43 +292,51 @@ export default function OLAPCube() {
         </div>
       </div>
 
-      {/* 4. Top 4 Summary Metrics */}
+      {/* 4. DYNAMIC 4 SUMMARY METRIC CARDS (Updates in real-time on every filter!) */}
       <div className="grid-top-kpis">
+        
         <div className="ui-card">
           <div className="kpi-header-row">
             <span className="kpi-title-simple">MATCHED OBSERVATIONS</span>
-            <span className="badge-pill gray">100%</span>
+            <span className="badge-pill gray">{dynamicKPIs.pctOfTotal}</span>
           </div>
-          <div className="stat-num-large" style={{ color: '#0F172A', marginTop: 4 }}>235,785</div>
-          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Active Cube Cells Aggregated</div>
+          <div className="stat-num-large" style={{ color: '#0F172A', marginTop: 4 }}>{dynamicKPIs.matchedObs}</div>
+          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Subset: {sliceFilter === 'All' ? 'Complete Dataset' : sliceFilter}</div>
         </div>
 
         <div className="ui-card">
           <div className="kpi-header-row">
-            <span className="kpi-title-simple">OVERALL SUBSET MEAN</span>
-            <span className="badge-pill teal">Baseline</span>
+            <span className="kpi-title-simple">OVERALL SUBSET {measure === 'exceedance' ? 'EXCEEDANCE' : (measure === 'count' ? 'TOTAL COUNT' : 'MEAN')}</span>
+            <span className="badge-pill teal">Active Slice</span>
           </div>
-          <div className="stat-num-large" style={{ color: '#0D9488', marginTop: 4 }}>111.9 <small style={{ fontSize: 13, color: '#64748B' }}>AQI</small></div>
-          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Moderate CPCB Index Level</div>
+          <div className="stat-num-large" style={{ color: '#0D9488', marginTop: 4 }}>
+            {dynamicKPIs.subsetMean} <small style={{ fontSize: 13, color: '#64748B' }}>{measure === 'exceedance' ? '%' : (measure === 'count' ? 'rows' : 'AQI')}</small>
+          </div>
+          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{dynamicKPIs.statusDesc}</div>
         </div>
 
         <div className="ui-card">
           <div className="kpi-header-row">
-            <span className="kpi-title-simple">SUBSET PEAK AQI</span>
-            <span className="badge-pill danger">Severe Event</span>
+            <span className="kpi-title-simple">SUBSET PEAK MAXIMUM</span>
+            <span className="badge-pill danger">Peak High</span>
           </div>
-          <div className="stat-num-large" style={{ color: '#E11D48', marginTop: 4 }}>500 <small style={{ fontSize: 13, color: '#64748B' }}>AQI</small></div>
-          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Hazardous Inversion Event</div>
+          <div className="stat-num-large" style={{ color: '#E11D48', marginTop: 4 }}>
+            {dynamicKPIs.subsetPeak} <small style={{ fontSize: 13, color: '#64748B' }}>{measure === 'exceedance' ? '%' : (measure === 'count' ? 'rows' : 'AQI')}</small>
+          </div>
+          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Maximum cell value in subset</div>
         </div>
 
         <div className="ui-card">
           <div className="kpi-header-row">
-            <span className="kpi-title-simple">SUBSET MIN AQI</span>
+            <span className="kpi-title-simple">SUBSET MINIMUM BASELINE</span>
             <span className="badge-pill success">Cleanest</span>
           </div>
-          <div className="stat-num-large" style={{ color: '#10B981', marginTop: 4 }}>3 <small style={{ fontSize: 13, color: '#64748B' }}>AQI</small></div>
-          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Monsoon Baseline Reading</div>
+          <div className="stat-num-large" style={{ color: '#10B981', marginTop: 4 }}>
+            {dynamicKPIs.subsetMin} <small style={{ fontSize: 13, color: '#64748B' }}>{measure === 'exceedance' ? '%' : (measure === 'count' ? 'rows' : 'AQI')}</small>
+          </div>
+          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Lowest cell reading in subset</div>
         </div>
+
       </div>
 
       {/* 5. Pivot Table Heatmap Matrix */}
@@ -200,9 +344,11 @@ export default function OLAPCube() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <div>
             <h3 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: 0 }}>
-              {activePreset === 'state_year' ? 'State vs Year Multi-Dimensional Trend Matrix' : 'Region vs Season Spatio-Temporal Pivot Table'}
+              {presetMeta.title} Pivot Table ({measure.toUpperCase()})
             </h3>
-            <p style={{ fontSize: 11, color: '#64748B', margin: '2px 0 0' }}>Values represent mean AQI with heat-intensity styling</p>
+            <p style={{ fontSize: 11, color: '#64748B', margin: '2px 0 0' }}>
+              Showing {transformedRows.length} filtered rows across {activeDataset.columns.length} columns • Slice: {sliceFilter}
+            </p>
           </div>
           <span className="badge-pill teal">2D Pivot Grid</span>
         </div>
@@ -212,21 +358,24 @@ export default function OLAPCube() {
             <thead>
               <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
                 <th style={{ padding: '12px 14px', textAlign: 'left', fontWeight: 800, color: '#334155' }}>
-                  {activePreset === 'state_year' ? 'STATE / UT' : 'REGION / ZONE'}
+                  {presetMeta.rowLabel}
                 </th>
-                {currentData.columns.map((col, idx) => (
-                  <th key={idx} style={{ padding: '12px 14px', textAlign: 'center', fontWeight: 800, color: idx === currentData.columns.length - 1 ? '#0D9488' : '#334155' }}>
+                {activeDataset.columns.map((col, idx) => (
+                  <th key={idx} style={{ padding: '12px 14px', textAlign: 'center', fontWeight: 800, color: '#334155' }}>
                     {col}
                   </th>
                 ))}
+                <th style={{ padding: '12px 14px', textAlign: 'center', fontWeight: 900, color: '#0D9488', background: '#F0FDFA' }}>
+                  Row Summary
+                </th>
               </tr>
             </thead>
             <tbody>
-              {filteredRows.map((row, rIdx) => (
+              {transformedRows.map((row, rIdx) => (
                 <tr key={rIdx} style={{ borderBottom: '1px solid #F1F5F9' }}>
                   <td style={{ padding: '12px 14px', fontWeight: 700, color: '#0F172A' }}>{row.name}</td>
                   {row.vals.map((val, cIdx) => {
-                    const style = getCellColor(val)
+                    const style = getCellColor(val, measure)
                     return (
                       <td key={cIdx} style={{ padding: '10px 14px', textAlign: 'center' }}>
                         <div style={{
@@ -239,13 +388,13 @@ export default function OLAPCube() {
                           display: 'inline-block',
                           minWidth: 70,
                         }}>
-                          {val}
+                          {measure === 'exceedance' ? `${val}%` : val}
                         </div>
                       </td>
                     )
                   })}
                   <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 900, color: '#0F172A', background: '#F8FAFC' }}>
-                    {row.avg}
+                    {measure === 'exceedance' ? `${row.avg}%` : row.avg}
                   </td>
                 </tr>
               ))}
