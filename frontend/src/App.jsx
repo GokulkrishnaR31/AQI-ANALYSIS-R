@@ -10,20 +10,31 @@ import HealthCalc       from './pages/HealthCalc'
 import Benchmarks       from './pages/Benchmarks'
 import AlertsReports    from './pages/AlertsReports'
 
-// ── Error boundary so one broken tab doesn't crash the whole app ──────────
 class ErrorBoundary extends Component {
-  constructor(props) { super(props); this.state = { error: null } }
-  static getDerivedStateFromError(err) { return { error: err } }
-  componentDidCatch(err, info) { console.error('Tab error:', err, info) }
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
   render() {
-    if (this.state.error) {
+    if (this.state.hasError) {
       return (
-        <div className="error-state" style={{ margin: 24, flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-          <strong>⚠️ This tab encountered an error</strong>
-          <code style={{ fontSize: 11, color: 'var(--text-muted)' }}>{this.state.error.message}</code>
-          <button className="btn btn-ghost" style={{ fontSize: 12, marginTop: 4 }}
-            onClick={() => this.setState({ error: null })}>
-            🔄 Retry
+        <div style={{
+          padding: 32, background: '#FFF1F2', border: '1px solid #FECDD3',
+          borderRadius: 12, margin: 24, color: '#BE123C',
+        }}>
+          <h2 style={{ marginBottom: 8, fontSize: 18 }}>Component Error</h2>
+          <p style={{ fontSize: 13, marginBottom: 12 }}>{this.state.error?.message ?? 'An unexpected error occurred.'}</p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            style={{
+              background: '#E11D48', color: '#fff', border: 'none',
+              borderRadius: 6, padding: '8px 16px', cursor: 'pointer', fontWeight: 600,
+            }}
+          >
+            Retry Component
           </button>
         </div>
       )
@@ -32,66 +43,40 @@ class ErrorBoundary extends Component {
   }
 }
 
-// ── Tab page map ──────────────────────────────────────────────────────────
-const TABS = [
-  { id: 'live',       Component: LiveMonitor },
-  { id: 'gis',        Component: GISMap },
-  { id: 'olap',       Component: OLAPCube },
-  { id: 'forecast',   Component: ForecastAnomalies },
-  { id: 'policy',     Component: PolicySimulator },
-  { id: 'health',     Component: HealthCalc },
-  { id: 'benchmarks', Component: Benchmarks },
-  { id: 'alerts',     Component: AlertsReports },
-]
-
 export default function App() {
   const [activeTab, setActiveTab] = useState('live')
 
-  // Switch tab and also reset any ErrorBoundary for the newly active tab
-  const [tabKey, setTabKey] = useState({})
-  function handleTabChange(id) {
-    setActiveTab(id)
-    // Bump the key to reset this tab's ErrorBoundary if it was in error state
-    setTabKey(prev => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }))
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'live':       return <LiveMonitor />
+      case 'gis':        return <GISMap />
+      case 'olap':       return <OLAPCube />
+      case 'forecast':   return <ForecastAnomalies />
+      case 'policy':     return <PolicySimulator />
+      case 'health':     return <HealthCalc />
+      case 'benchmarks': return <Benchmarks />
+      case 'alerts':     return <AlertsReports />
+      default:           return <LiveMonitor />
+    }
   }
 
   return (
     <AQIProvider>
-      <div className="app-layout">
-        <Header activeTab={activeTab} onTabChange={handleTabChange} />
-
-        <main className="main-content" role="main">
-          {TABS.map(({ id, Component }) => (
-            /*
-             * Keep all tabs mounted (display:none when inactive).
-             * This avoids GIS map re-fetch on every tab switch, and
-             * avoids Leaflet teardown/remount issues.
-             */
-            <div
-              key={id}
-              role="tabpanel"
-              aria-labelledby={`tab-${id}`}
-              hidden={activeTab !== id}
-              style={{ display: activeTab === id ? 'block' : 'none' }}
-              className={activeTab === id ? 'fade-in' : ''}
-            >
-              <ErrorBoundary key={tabKey[id] ?? 0}>
-                <Component />
-              </ErrorBoundary>
-            </div>
-          ))}
+      <div className="app-container">
+        <Header activeTab={activeTab} onTabChange={setActiveTab} />
+        <main className="main-content">
+          <ErrorBoundary key={activeTab}>
+            {renderContent()}
+          </ErrorBoundary>
         </main>
-
-        <footer style={{
-          textAlign:  'center',
-          padding:    '14px 24px',
-          fontSize:   11,
-          color:      'var(--text-muted)',
-          borderTop:  '1px solid var(--border)',
-          background: 'var(--bg-surface)',
-        }}>
-          India AQI Intelligence Platform · R Plumber API + React ·
-          2022–2025 · 32 States · 235K records · 34 monitoring cities incl. Northeast India
+        <footer className="platform-footer">
+          <div className="footer-left">
+            <span className="pulse-dot green" style={{ width: 7, height: 7 }}></span>
+            <span>India AQI Intelligence Platform • R Plumber API + React Kernel Engine • 2022–2025</span>
+          </div>
+          <div className="footer-right">
+            <span>MoEFCC / CPCB & OpenAQ Aggregation • 32 States • 235K records • 81 continuous monitoring stations</span>
+          </div>
         </footer>
       </div>
     </AQIProvider>

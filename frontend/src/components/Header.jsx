@@ -1,84 +1,118 @@
-import { useAQI, ALL_STATES, getCitiesForState } from '../context/AQIContext'
+import { useState, useEffect } from 'react'
+import { useAQI } from '../context/AQIContext'
 import './Header.css'
 
 export default function Header({ activeTab, onTabChange }) {
-  const { selectedState, setSelectedState, selectedCity, setSelectedCity } = useAQI()
+  const { selectedState, setSelectedState, selectedCity, setSelectedCity, cityOptions, ALL_STATES } = useAQI()
+  const [timeStr, setTimeStr] = useState('')
 
-  // Cities filtered by currently selected state
-  const cityOptions = getCitiesForState(selectedState)
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date()
+      setTimeStr(now.toLocaleTimeString('en-IN', { hour12: false }) + ' IST')
+    }
+    updateTime()
+    const timer = setInterval(updateTime, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   const tabs = [
-    { id: 'live',       label: '📍 Live Monitor' },
-    { id: 'gis',        label: '🗺️ GIS Map' },
-    { id: 'olap',       label: '🧊 OLAP Cube' },
-    { id: 'forecast',   label: '🔮 Forecast & Anomalies' },
-    { id: 'policy',     label: '🧪 Policy Simulator' },
-    { id: 'health',     label: '🏥 Health & Purifier' },
-    { id: 'benchmarks', label: '🌍 WHO vs CPCB' },
-    { id: 'alerts',     label: '📄 Alerts & Reports' },
+    { id: 'live',        label: 'Live Monitor',         icon: '📍' },
+    { id: 'gis',         label: 'GIS Map',              icon: '🗺️' },
+    { id: 'olap',        label: 'OLAP Cube',            icon: '🧊' },
+    { id: 'forecast',    label: 'Forecast & Anomalies', icon: '📈' },
+    { id: 'policy',      label: 'Policy Simulator',     icon: '🌱' },
+    { id: 'health',      label: 'Health & Purifier',    icon: '🛡️' },
+    { id: 'benchmarks',  label: 'WHO vs CPCB',          icon: '🌐' },
+    { id: 'alerts',      label: 'Alerts & Reports',     icon: '📊' },
   ]
 
-  function handleStateChange(e) {
-    const newState = e.target.value
-    setSelectedState(newState)
-    // City reset is handled by the useEffect in AQIContext
+  const handleStateChange = (e) => {
+    setSelectedState(e.target.value)
   }
 
   return (
-    <header className="site-header">
-      <div className="header-top">
-        <div className="header-brand">
-          <span className="brand-icon">🌿</span>
+    <header className="pro-header">
+      <div className="pro-header-top">
+        {/* Brand */}
+        <div className="pro-brand">
+          <div className="brand-icon-shield">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M8 11h8"/>
+              <path d="M8 15h6"/>
+            </svg>
+          </div>
           <div>
-            <h1 className="brand-title">India Air Quality Intelligence Platform</h1>
-            <p className="brand-sub">Real-Time Analytics · GIS Mapping · ML Forecasting · Policy Simulation</p>
+            <div className="brand-title-wrap">
+              <h1 className="brand-title">India Air Quality Intelligence Platform</h1>
+              <span className="badge-vpro">v2.0-PRO</span>
+            </div>
+            <p className="brand-subtitle">Real-Time Analytics • GIS Mapping • ML Forecasting • Policy Simulation</p>
           </div>
         </div>
 
-        <div className="header-controls">
-          {/* State selector — drives Forecast, Anomalies, Benchmarks AND filters city list */}
-          <div className="selector-group">
-            <label className="selector-label" htmlFor="global-state-select">State</label>
+        {/* Controls */}
+        <div className="pro-header-controls">
+          <div className="select-field">
+            <label className="select-label">STATE SELECTION</label>
             <select
-              id="global-state-select"
-              className="header-select"
+              className="pro-select"
               value={selectedState}
               onChange={handleStateChange}
             >
-              {ALL_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+              <option value="All India">All India (Aggregated)</option>
+              {ALL_STATES.filter(s => s !== 'All India').map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
             </select>
           </div>
 
-          {/* City selector — filtered by selected state */}
-          <div className="selector-group">
-            <label className="selector-label" htmlFor="global-city-select">City</label>
+          <div className="select-field">
+            <label className="select-label">STATION / URBAN CENTER</label>
             <select
-              id="global-city-select"
-              className="header-select"
-              value={cityOptions.includes(selectedCity) ? selectedCity : cityOptions[0] ?? ''}
+              className="pro-select"
+              value={cityOptions.includes(selectedCity) ? selectedCity : cityOptions[0] ?? 'Delhi'}
               onChange={e => setSelectedCity(e.target.value)}
             >
-              {cityOptions.map(c => <option key={c} value={c}>{c}</option>)}
+              {cityOptions.map(c => (
+                <option key={c} value={c}>{c === 'Delhi' ? 'Delhi (NCR Composite)' : c}</option>
+              ))}
             </select>
           </div>
 
-          <span className="badge badge-live">● LIVE</span>
+          <button className="btn-telemetry">
+            <span className="pulse-dot red"></span>
+            LIVE TELEMETRY
+          </button>
+
+          <div className="pro-clock-badge">
+            <div className="clock-time">{timeStr || '16:42:18 IST'}</div>
+            <div className="clock-sync">
+              <span className="pulse-dot green" style={{ width: 6, height: 6 }}></span>
+              synced 2m ago
+            </div>
+          </div>
         </div>
       </div>
 
-      <nav className="tab-nav" role="tablist" aria-label="Main navigation">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            id={`tab-${tab.id}`}
-            role="tab"
-            aria-selected={activeTab === tab.id}
-            className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => onTabChange(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Navigation Tabs */}
+      <nav className="pro-nav-tabs" role="tablist">
+        {tabs.map(tab => {
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              className={`pro-tab-btn ${isActive ? 'active' : ''}`}
+              onClick={() => onTabChange(tab.id)}
+            >
+              <span className="tab-icon">{tab.icon}</span>
+              <span className="tab-text">{tab.label}</span>
+            </button>
+          )
+        })}
       </nav>
     </header>
   )
