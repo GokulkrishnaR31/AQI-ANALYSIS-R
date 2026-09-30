@@ -38,10 +38,15 @@ const VIEWS = [
   { label: '🏖️ West India',   center: [21.0, 73.5], zoom: 6 },
 ]
 
-const CITIES_LIST = Object.entries(MASTER_CITY_DATA).map(([name, d]) => ({
-  city: name,
-  ...d
-}))
+const CITIES_LIST = Object.entries(MASTER_CITY_DATA)
+  .map(([name, d]) => ({
+    city: name,
+    lat: Number(d.lat),
+    lng: Number(d.lng),
+    aqi: Number(d.aqi),
+    ...d
+  }))
+  .filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lng))
 
 export default function GISMap() {
   const [mapRef, setMapRef] = useState(null)
